@@ -4,19 +4,19 @@ from itertools import chain
 
 import numpy as np
 import torch
+import wandb
 
+from aari.episodes import get_episodes
+from src.cpc import CPCTrainer
 from src.dim_baseline import DIMTrainer
+from src.encoders import ImpalaCNN, NatureCNN
 from src.global_infonce_stdim import GlobalInfoNCESpatioTemporalTrainer
 from src.global_local_infonce import GlobalLocalInfoNCESpatioTemporalTrainer
+from src.infonce_spatio_temporal import InfoNCESpatioTemporalTrainer
+from src.no_action_feedforward_predictor import NaFFPredictorTrainer
 from src.spatio_temporal import SpatioTemporalTrainer
 from src.utils import get_argparser
-from src.encoders import NatureCNN, ImpalaCNN
-from src.cpc import CPCTrainer
 from src.vae import VAETrainer
-from src.no_action_feedforward_predictor import NaFFPredictorTrainer
-from src.infonce_spatio_temporal import InfoNCESpatioTemporalTrainer
-import wandb
-from aari.episodes import get_episodes
 
 
 def train_encoder(args):
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     parser = get_argparser()
     args = parser.parse_args()
     tags = ['pretraining-only']
-    wandb.init(project=args.wandb_proj, entity="curl-atari", tags=tags)
+    wandb.init(project=args.wandb_proj, tags=tags)
     config = {}
     config.update(vars(args))
     wandb.config.update(config)

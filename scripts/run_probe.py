@@ -1,13 +1,14 @@
-from scripts.run_contrastive import train_encoder
-from aari.probe import ProbeTrainer
+import sys
 
 import torch
-from src.utils import get_argparser, train_encoder_methods, probe_only_methods
-from src.encoders import NatureCNN, ImpalaCNN
 import wandb
-import sys
-from src.majority import majority_baseline
+
 from aari.episodes import get_episodes
+from aari.probe import ProbeTrainer
+from scripts.run_contrastive import train_encoder
+from src.encoders import ImpalaCNN, NatureCNN
+from src.majority import majority_baseline
+from src.utils import get_argparser, probe_only_methods, train_encoder_methods
 
 
 def run_probe(args):
@@ -81,5 +82,5 @@ if __name__ == "__main__":
     parser = get_argparser()
     args = parser.parse_args()
     tags = ['probe']
-    wandb.init(project=args.wandb_proj, entity="curl-atari", tags=tags)
+    wandb.init(project=args.wandb_proj, tags=tags)
     run_probe(args)
