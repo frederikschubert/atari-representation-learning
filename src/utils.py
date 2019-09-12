@@ -93,6 +93,91 @@ def get_argparser():
     parser.add_argument("--probe-collect-mode", type=str, choices=["random_agent", "pretrained_ppo"],
                         default="random_agent")
     parser.add_argument('--num-runs', type=int, default=1)
+
+    # RL arguments
+    parser.add_argument(
+        '--ppo-lr', type=float, default=7e-4, help='learning rate (default: 7e-4)')
+    parser.add_argument(
+        '--ppo-eps',
+        type=float,
+        default=1e-5,
+        help='RMSprop optimizer epsilon (default: 1e-5)')
+    parser.add_argument(
+        '--ppo-alpha',
+        type=float,
+        default=0.99,
+        help='RMSprop optimizer apha (default: 0.99)')
+    parser.add_argument(
+        '--ppo-gamma',
+        type=float,
+        default=0.99,
+        help='discount factor for rewards (default: 0.99)')
+    parser.add_argument(
+        '--ppo-entropy-coef',
+        type=float,
+        default=0.01,
+        help='entropy term coefficient (default: 0.01)')
+    parser.add_argument(
+        '--ppo-value-loss-coef',
+        type=float,
+        default=0.5,
+        help='value loss coefficient (default: 0.5)')
+    parser.add_argument(
+        '--ppo-max-grad-norm',
+        type=float,
+        default=0.5,
+        help='max norm of gradients (default: 0.5)')
+    parser.add_argument(
+        '--ppo-epoch',
+        type=int,
+        default=4,
+        help='number of ppo epochs (default: 4)')
+    parser.add_argument(
+        '--ppo-num-mini-batch',
+        type=int,
+        default=32,
+        help='number of batches for ppo (default: 32)')
+    parser.add_argument(
+        '--ppo-clip-param',
+        type=float,
+        default=0.2,
+        help='ppo clip parameter (default: 0.2)')
+    parser.add_argument(
+        '--ppo-use-linear-lr-decay',
+        action='store_true',
+        default=False,
+        help='use a linear schedule on the learning rate')
+
+    parser.add_argument(
+        '--log-interval',
+        type=int,
+        default=10,
+        help='log interval, one log per n updates (default: 10)')
+    parser.add_argument(
+        '--save-interval',
+        type=int,
+        default=100,
+        help='save interval, one save per n updates (default: 100)')
+    parser.add_argument(
+        '--eval-interval',
+        type=int,
+        default=None,
+        help='eval interval, one eval per n updates (default: None)')
+    parser.add_argument(
+        '--num-steps',
+        type=int,
+        default=5,
+        help='number of forward steps in A2C (default: 5)')
+    parser.add_argument(
+        '--num-env-steps',
+        type=int,
+        default=10e6,
+        help='number of environment steps to train (default: 10e6)')
+    parser.add_argument(
+        '--use-proper-time-limits',
+        action='store_true',
+        default=False,
+        help='compute returns taking into account time limits')
     return parser
 
 
