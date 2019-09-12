@@ -5,10 +5,11 @@ from collections import deque
 
 import numpy as np
 import torch
+import torch.nn as nn
 import wandb
 
 from a2c_ppo_acktr import algo, utils
-from a2c_ppo_acktr.model import Policy
+from a2c_ppo_acktr.model import NNBase, Policy
 from a2c_ppo_acktr.storage import RolloutStorage
 from aari.envs import make_vec_envs
 from src.encoders import ImpalaCNN, NatureCNN
@@ -44,8 +45,27 @@ def get_encoder(args, observation_shape, device):
     return encoder
 
 
+class SimpleBase(NNBase):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=256):
+        super().__init__(recurrent, num_inputs, hidden_size)
+        init_ = lambda m: utils.init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0), np.sqrt(2))
+
+        if recurrent:
+            num_inputs = hidden_size
+
+        # self.actor = init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
+        self.critic_linear = init_(nn.Linear(num_inputs, 1))
+        self.train()
+    
+    def forward(self, inputs, rnn_hxs, masks):
+        x = inputs
+        if self.is_recurrent:
+            x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
+        return self.critic_linear(x), x, rnn_hxs
+
 def get_agent(args, envs, encoder, device):
-    actor_critic = Policy([encoder.feature_size], envs.action_space)
+    actor_critic = Policy([encoder.feature_size], envs.action_space, base=SimpleBase)
     actor_critic.to(device)
     agent = algo.PPO(
         actor_critic,
