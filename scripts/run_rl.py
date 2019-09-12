@@ -91,7 +91,10 @@ def train(args, envs, encoder, agent, actor_critic, device):
     )
 
     obs = envs.reset()
-    with torch.no_grad():
+    if args.weights_path != "None":
+        with torch.no_grad():
+            obs = encoder(obs)
+    else:
         obs = encoder(obs)
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
@@ -118,8 +121,14 @@ def train(args, envs, encoder, agent, actor_critic, device):
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
 
-            with torch.no_grad():
+            if args.weights_path != "None":
+                with torch.no_grad():
+                    obs = encoder(obs)
+            else:
                 obs = encoder(obs)
+
+            # TODO: Check that the encoder is not updated
+            # TODO: Analyze features of vae and infonce-st encoder
 
             for info in infos:
                 if "episode" in info.keys():
