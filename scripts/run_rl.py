@@ -23,7 +23,7 @@ def get_envs(
     )
 
 
-def get_encoder(args, observation_shape):
+def get_encoder(args, observation_shape, device):
     if args.encoder_type == "Nature":
         encoder = NatureCNN(observation_shape[0], args)
     elif args.encoder_type == "Impala":
@@ -39,7 +39,7 @@ def get_encoder(args, observation_shape):
                 args.method, args.weights_path
             )
         )
-        encoder.load_state_dict(torch.load(args.weights_path))
+        encoder.load_state_dict(torch.load(args.weights_path, map_location=device))
         encoder.eval()
     return encoder
 
@@ -186,7 +186,7 @@ def run_rl(args):
         downsample=not args.no_downsample,
         color=args.color,
     )
-    encoder = get_encoder(args, envs.observation_space.shape)
+    encoder = get_encoder(args, envs.observation_space.shape, device)
     agent, actor_critic = get_agent(args, envs, encoder, device)
     train(args, envs, encoder, agent, actor_critic, device)
 
