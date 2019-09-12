@@ -111,11 +111,12 @@ def train(args, envs, encoder, agent, actor_critic, device):
 
         for step in range(args.num_steps):
             # Sample actions
-            value, action, action_log_probs, recurrent_hidden_states, actor_features, dist_entropy = actor_critic.act(
-                rollouts.obs[step],
-                rollouts.recurrent_hidden_states[step],
-                rollouts.masks[step],
-            )
+            with torch.no_grad():
+                value, action, action_log_probs, recurrent_hidden_states, actor_features, dist_entropy = actor_critic.act(
+                    rollouts.obs[step],
+                    rollouts.recurrent_hidden_states[step],
+                    rollouts.masks[step],
+                )
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
@@ -149,11 +150,12 @@ def train(args, envs, encoder, agent, actor_critic, device):
                 bad_masks,
             )
 
-        next_value = actor_critic.get_value(
-            rollouts.obs[-1],
-            rollouts.recurrent_hidden_states[-1],
-            rollouts.masks[-1],
-        ).detach()
+        with torch.no_grad():
+            next_value = actor_critic.get_value(
+                rollouts.obs[-1],
+                rollouts.recurrent_hidden_states[-1],
+                rollouts.masks[-1],
+            ).detach()
 
         rollouts.compute_returns(
             next_value, False, args.ppo_gamma, 0.0, args.use_proper_time_limits
