@@ -1,3 +1,6 @@
+import multiprocessing
+
+multiprocessing.set_start_method("spawn", True)
 import os
 import sys
 import time
@@ -44,28 +47,36 @@ def get_encoder(args, observation_shape, device):
         encoder.eval()
     return encoder
 
-
 class SimpleBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=256):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=256, encoder=None):
         super().__init__(recurrent, num_inputs, hidden_size)
-        init_ = lambda m: utils.init(m, nn.init.orthogonal_, lambda x: nn.init.
-                               constant_(x, 0), np.sqrt(2))
+        init_ = lambda m: utils.init(
+            m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), np.sqrt(2)
+        )
 
         if recurrent:
             num_inputs = hidden_size
 
         # self.actor = init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
+        self.encoder = encoder
         self.critic_linear = init_(nn.Linear(num_inputs, 1))
         self.train()
-    
+
     def forward(self, inputs, rnn_hxs, masks):
-        x = inputs
+        if args.weights_path == "None":
+            x = self.encoder(inputs)
+        else:
+            with torch.no_grad():
+                x = self.encoder(inputs)
         if self.is_recurrent:
             x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
         return self.critic_linear(x), x, rnn_hxs
 
 def get_agent(args, envs, encoder, device):
-    actor_critic = Policy([encoder.feature_size], envs.action_space, base=SimpleBase)
+
+    actor_critic = Policy(
+        [encoder.feature_size], envs.action_space, base=SimpleBase, base_kwargs={"encoder": encoder}
+    )
     actor_critic.to(device)
     agent = algo.PPO(
         actor_critic,
@@ -85,17 +96,12 @@ def train(args, envs, encoder, agent, actor_critic, device):
     rollouts = RolloutStorage(
         args.num_steps,
         args.num_processes,
-        [encoder.feature_size],
+        envs.observation_space.shape,
         envs.action_space,
         actor_critic.recurrent_hidden_state_size,
     )
 
     obs = envs.reset()
-    if args.weights_path != "None":
-        with torch.no_grad():
-            obs = encoder(obs)
-    else:
-        obs = encoder(obs)
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
 
@@ -120,12 +126,6 @@ def train(args, envs, encoder, agent, actor_critic, device):
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-
-            if args.weights_path != "None":
-                with torch.no_grad():
-                    obs = encoder(obs)
-            else:
-                obs = encoder(obs)
 
             # TODO: Check that the encoder is not updated
             # TODO: Analyze features of vae and infonce-st encoder
@@ -155,7 +155,7 @@ def train(args, envs, encoder, agent, actor_critic, device):
                 rollouts.obs[-1],
                 rollouts.recurrent_hidden_states[-1],
                 rollouts.masks[-1],
-            ).detach()
+            )
 
         rollouts.compute_returns(
             next_value, False, args.ppo_gamma, 0.0, args.use_proper_time_limits
