@@ -217,6 +217,7 @@ def run_rl(args):
     )
     encoder = get_encoder(args, envs.observation_space.shape, device)
     agent, actor_critic = get_agent(args, envs, encoder, device)
+    wandb.watch(actor_critic)
     train(args, envs, encoder, agent, actor_critic, device)
 
 
