@@ -2,69 +2,58 @@
 
 Ankesh Anand*, Evan Racah*, Sherjil Ozair*, Yoshua Bengio, Marc-Alexandre Côté, R Devon Hjelm
 
-Arxiv: https://arxiv.org/abs/1906.08226
+This repo provides code for the benchmark and techniques introduced in the paper [Unsupervised State Representation Learning in Atari](https://arxiv.org/abs/1906.08226)
 
-1. [ Installation. ](#install)
-2. [ Usage ](#usage)
+* [📦 Install ](#install) -- Install relevant dependencies and the project
+* [🔧 Usage ](#usage) -- Learn how to use AtariARI and train representations with Spatio-Temporal DeepInfomax (ST-DIM)
 
-<a name="install"></a>
-## Installation
-### AARI Wrapper
-You can do a minimal install to get just the aari wrapper by doing:
+## Install
+### AtariARI Wrapper
+You can do a minimal install to get just the AtariARI (Atari Annotated RAM Interface) wrapper by doing:
 
 ```bash
-git clone https://github.com/ankeshanand/atari-representation-learning.git
+git clone https://github.com/mila-iqia/atari-representation-learning.git
 cd atari-representation-learning
-pip install -e .
+python setup.py install
 ```
-This just requires `gym[atari]` and it gives you the ability to play around with the aari wrapper.
-If you want access to more complex features, you can install the other dependencies below:
+This just requires `gym[atari]` and it gives you the ability to play around with the AtariARI wrapper.
+If you want to use the code for training representation learning methods and probing them, you will need a full installation:
 
-### Probing Interface
-If you want to use the code that probes the representations
-#### Dependencies:
-* PyTorch
-* Scikit-Learn
+### Full installation (AtariARI Wrapper + Training & Probing Code)
 
 ```bash
+# PyTorch and scikit learn
 conda install pytorch torchvision -c pytorch
-conda install sklearn
-```
-
-### Full installation (AARI Wrapper + Training & Probing Code)
-
-```bash
-# PyTorch
-conda install pytorch torchvision -c pytorch
+conda install scikit-learn
 
 # Baselines for Atari preprocessing
-git clone https://github.com/openai/baselines.git
-cd baselines
-pip install -e .
+# Tensorflow is a dependency, but you don't need to install the GPU version
+conda install tensorflow
+pip install git+git://github.com/openai/baselines
 
 # pytorch-a2c-ppo-acktr for RL utils
-git clone https://github.com/ankeshanand/pytorch-a2c-ppo-acktr-gail
-cd pytorch-a2c-ppo-acktr-gail
-pip install -e .
+pip install git+git://github.com/ankeshanand/pytorch-a2c-ppo-acktr-gail
 
+# Clone and install our package
 pip install -r requirements.txt
-git clone https://github.com/ankeshanand/atari-representation-learning.git
+git clone https://github.com/mila-iqia/atari-representation-learning.git
 cd atari-representation-learning
-pip install -e .
+python setup.py install
 ```
 
-<a name="usage"></a>
 ## Usage 
-### Atari Annotated RAM Interface (AARI): 
+### Atari Annotated RAM Interface (AtariARI): 
 
-![AARI](aari/aari.png?raw=true)
+<p align="center">
+ <img src="https://raw.githubusercontent.com/mila-iqia/atari-representation-learning/master/atariari/benchmark/atariari.png" width=700>
+</p>
 
-AARI exposes the ground truth labels for different state variables for each observation. We have made AARI available as a Gym wrapper, to use it simply wrap an Atari gym env with `AARIWrapper`. 
+AtariARI exposes the ground truth labels for different state variables for each observation. We have made AtariARI available as a Gym wrapper, to use it simply wrap an Atari gym env with `AtariARIWrapper`. 
 
 ```python
 import gym
-from aari.wrapper import AARIWrapper
-env = AARIWrapper(gym.make('MsPacmanNoFrameskip-v4'))
+from atariari.wrapper import AtariARIWrapper
+env = AtariARIWrapper(gym.make('MsPacmanNoFrameskip-v4'))
 obs = env.reset()
 obs, reward, done, info = env.step(1)
 ```
@@ -91,9 +80,9 @@ Now, `info` is a dictionary of the form:
   'player_score': 0,
   'num_lives': 2}}
 ```
-**Note:** In our experiments, we use additional preprocessing for Atari environments mainly following Minh et. al, 2014. See [aari/envs.py](aari/envs.py) for more info! 
+**Note:** In our experiments, we use additional preprocessing for Atari environments mainly following Minh et. al, 2014. See [atariari/benchmark/envs.py](atariari/envs.py) for more info! 
 
-If you want the raw RAM annotations (which parts of ram correspond to each state variable), check out [aari/ram_annotations.py](aari/ram_annotations.py)
+If you want the raw RAM annotations (which parts of ram correspond to each state variable), check out [atariari/benchmark/ram_annotations.py](atariari/ram_annotations.py)
 
 
 ### Probing
@@ -105,7 +94,7 @@ We provide an interface for the included probing tasks.
 First, get episodes for train, val and, test:
 
 ```python
-from aari.episodes import get_episodes
+from atariari.episodes import get_episodes
 
 tr_episodes, val_episodes,\
 tr_labels, val_labels,\
@@ -117,7 +106,7 @@ test_episodes, test_labels = get_episodes(env_name="PitfallNoFrameskip-v4",
 Then probe them using ProbeTrainer and your encoder (`my_encoder`):
 
 ```python
-from aari.probe import ProbeTrainer
+from atariari.probe import ProbeTrainer
 
 probe_trainer = ProbeTrainer(my_encoder, representation_len=my_encoder.feature_size)
 probe_trainer.train(tr_episodes, val_episodes,
@@ -163,6 +152,11 @@ my_encoder.load_state_dict(torch.load(open("path/to/my/weights.pt", "rb")))
 ```
 
 ### Spatio-Temporal DeepInfoMax:
+<p align="center">
+ <img src="https://raw.githubusercontent.com/mila-iqia/atari-representation-learning/master/atariari/methods/STDIM.png" width=700>
+</p>
+
+
 `src/` contains implementations of several representation learning methods, along with `ST-DIM`. Here's a sample usage: 
 
 ```bash

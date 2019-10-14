@@ -1,14 +1,13 @@
-import sys
+from scripts.run_contrastive import train_encoder
+from atariari.benchmark.probe import ProbeTrainer
 
 import torch
+from atariari.methods.utils import get_argparser, train_encoder_methods, probe_only_methods
+from atariari.methods.encoders import NatureCNN, ImpalaCNN
 import wandb
-
-from aari.episodes import get_episodes
-from aari.probe import ProbeTrainer
-from scripts.run_contrastive import train_encoder
-from src.encoders import ImpalaCNN, NatureCNN
-from src.majority import majority_baseline
-from src.utils import get_argparser, probe_only_methods, train_encoder_methods
+import sys
+from atariari.methods.majority import majority_baseline
+from atariari.benchmark.episodes import get_episodes
 
 
 def run_probe(args):
@@ -33,7 +32,6 @@ def run_probe(args):
         encoder = train_encoder(args)
         encoder.probing = True
         encoder.eval()
-
 
     elif args.method in ["pretrained-rl-agent", "majority"]:
         encoder = None
@@ -72,6 +70,9 @@ def run_probe(args):
 
         trainer.train(tr_eps, val_eps, tr_labels, val_labels)
         test_acc, test_f1score = trainer.test(test_eps, test_labels)
+        # trainer = SKLearnProbeTrainer(encoder=encoder)
+        # test_acc, test_f1score = trainer.train_test(tr_eps, val_eps, tr_labels, val_labels,
+        #                                             test_eps, test_labels)
 
     print(test_acc, test_f1score)
     wandb.log(test_acc)
